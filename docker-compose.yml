@@ -9,19 +9,22 @@ services:
     ports:
       - 80:80
     volumes:
-      - ./src:/var/www/php
+      - ./src/backend.companies:/var/www/backend.companies
       - ./.docker/nginx/conf.d:/etc/nginx/conf.d
       - phpmyadmindata:/var/www/phpmyadmin
     depends_on:
-      - php
+      - backend
       - phpmyadmin
 
-  # PHP Service
-  php:
-    build: ./.docker/php
-    working_dir: /var/www/php
+  # Backend Service
+  backend:
+    build:
+      context: ./src/backend.companies
+      args:
+        HOST_UID: $HOST_UID
+    working_dir: /var/www/backend.companies
     volumes:
-      - ./src:/var/www/php
+      - ./src/backend.companies:/var/www/backend.companies
     depends_on:
       mysql:
         condition: service_healthy
@@ -29,10 +32,12 @@ services:
   # MySQL Service
   mysql:
     image: mysql/mysql-server:8.0
+    ports:
+      - '3306:3306'
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_ROOT_HOST: "%"
-      MYSQL_DATABASE: demo
+      MYSQL_DATABASE: companies
     volumes:
       - ./.docker/mysql/my.cnf:/etc/mysql/conf.d/my.cnf
       - mysqldata:/var/lib/mysql
@@ -47,7 +52,7 @@ services:
     environment:
       PMA_HOST: mysql
     volumes:
-      - phpmyadmindata:/var/www/html
+      - phpmyadmindata:/var/www/phpmyadmin
     depends_on:
       mysql:
         condition: service_healthy
